@@ -56,6 +56,6 @@ The assertion module checks APB setup/access behavior, signal stability during w
 
 When a test fails, I check the test name, seed and failure time. I open the waveform, compare AXI and APB signals, locate the first incorrect value and trace it back to the RTL or testbench. After the fix, I rerun the same test and then the regression.
 
-## Interview explanation
+## Final explanation
 
 I designed and verified an AXI4-Lite to APB bridge. I tested write, read and invalid-address transactions using a self-checking testbench. I reviewed the waveform to verify the AXI handshakes, APB phases, data and responses. I also added UVM components, assertions, regression scripts and documented bug analysis.
