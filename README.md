@@ -1,213 +1,98 @@
-# AXI4-Lite to APB Bridge Design Verification
+AXI4-Lite to APB Bridge Verification
 
-An industry-style verification project for a one-outstanding AXI4-Lite to APB bridge. The repository demonstrates specification-driven verification, reusable UVM components, SystemVerilog assertions, constrained-random stimulus, an end-to-end scoreboard, functional coverage, regression automation, waveform debugging and documented root-cause analysis.
+I built this project to practice RTL design and design verification using an AXI4-Lite to APB bridge.
 
-## Why this project matters
+The bridge receives read and write requests from the AXI4-Lite side and converts them into APB transfers. I used an APB memory model to check that the correct address, data and response are returned.
 
-The bridge sits between a higher-performance system bus and a simpler peripheral bus. Verification must prove more than individual signal toggles: one AXI request must become the correct APB transfer, survive wait states and backpressure, return the correct response, and never lose or corrupt data.
+Test result
 
-```text
-AXI4-Lite request
-        |
-        v
-+-------------------+        +------------------+
-| AXI-to-APB bridge |------->| APB memory slave |
-|       DUT         |<-------|   wait + errors  |
-+-------------------+        +------------------+
-        |
-        v
-AXI4-Lite response
-```
+The directed smoke test completed successfully:
 
-## Verification architecture
+AXI_APB_TEST_PASS checks=5 errors=0
 
-```text
-UVM test / constrained-random sequence
-                  |
-           AXI sequencer
-                  |
-             AXI driver
-                  |
-                  v
-AXI monitor ---> DUT ---> APB monitor
-      |                       |
-      +--------> scoreboard <-+
-      |
-      +--------> functional coverage
+The test performed:
 
-Assertions continuously check AXI and APB protocol rules.
-```
+Two write transactions
 
-## What is verified
+Two read transactions
 
-- AXI4-Lite read and write handshakes
-- Independent AXI write-address and write-data channels
-- AXI response backpressure
-- APB setup and access phases
-- APB wait states
-- Address, control and data stability
-- Byte write strobes
-- Read-data integrity
-- APB error to AXI error-response mapping
-- Reset behavior
-- Repeated random traffic using reproducible seeds
+One invalid-address transaction to check the error response
 
-The detailed requirements-to-checker mapping is in [docs/verification_plan.md](docs/verification_plan.md).
+Waveform
 
-## Direct connection to the professional verification ecosystem
+The waveform below was generated during the passing test and opened using GTKWave.
 
-The engineering method is portable even when different licenses or tools are available. The project separates source code, simulation, waveform storage, debug and regression management so the same verification environment can move between toolchains.
 
-| Skill practiced in this repository | Current workflow | Direct professional equivalent | Knowledge that transfers |
-|---|---|---|---|
-| Edit RTL, UVM and assertions | VS Code | Verdi IDE or another RTL IDE | SystemVerilog navigation, hierarchy, classes, interfaces and source review |
-| Compile and simulate | Questa target in `Makefile` | VCS compile, elaboration and simulation | File ordering, UVM test selection, plusargs, seeds, logs and simulator failures |
-| Record simulation activity | VCD | FSDB | Selecting scopes/signals, controlling waveform size and reproducing time-based behavior |
-| Inspect timing and values | GTKWave | Verdi waveform viewer | Cursors, zooming, edge-by-edge protocol analysis and expected-versus-actual comparison |
-| Trace a wrong value | Waveform plus VS Code source search | Trace Driver, Trace Load, schematic and temporal-flow views | Following a symptom backward to the earliest incorrect producer |
-| Analyze assertion failures | Simulator log plus waveform | Verdi assertion analysis | Jumping from a failed property to the responsible cycle, signals and source rule |
-| Run test lists and seeds | `run_regression.py` | Verification management/regression system | Test submission, reproducibility, pass/fail collection, failure triage and reporting |
-| Review verification completeness | UVM covergroup and verification plan | Coverage database and coverage dashboard | Mapping requirements to tests, checkers and coverage holes |
-| Preserve debug evidence | RCA Markdown reports and Git history | Collaborative debug database/dashboard | Communicating symptom, evidence, root cause, correction and regression proof |
 
-### VCS and Verdi readiness
+In the waveform, I can check the AXI request and response signals together with the APB setup and access phases. This helps confirm that every AXI transaction becomes the correct APB transaction.
 
-The same UVM source supports a VCS target through `scripts/run_vcs.sh`. When a licensed environment and `VERDI_HOME` are available, the target enables debug access, creates an FSDB file and opens it using the `make verdi` command.
+Tools used
 
-This repository does **not** claim that a VCS/Verdi run was completed unless genuine logs and FSDB evidence are added. Until then, the validated local workflow should be described using the simulator and waveform viewer actually used.
+SystemVerilog for RTL and testbench code
 
-## Debug workflow used in the project
+Icarus Verilog for the completed functional smoke test
 
-```text
-Run one test
-    |
-    v
-Assertion or scoreboard reports the first failure
-    |
-    v
-Record test name, seed, time, expected value and actual value
-    |
-    v
-Open waveform and validate AXI and APB handshakes pin by pin
-    |
-    v
-Trace the first incorrect signal back to its producer
-    |
-    v
-Correct the smallest faulty RTL/testbench logic
-    |
-    v
-Rerun the exact failure, then run the complete regression
-```
+GTKWave for waveform debugging
 
-See [docs/debug_playbook.md](docs/debug_playbook.md) for the repeatable RCA procedure.
+Python and Makefile scripts for automation and regressions
 
-## Assertions
+Git and GitHub for version control
 
-The assertion module checks important protocol invariants:
+VS Code for development
 
-- `PENABLE` cannot be active without `PSEL`.
-- Every APB access must be preceded by a setup phase.
-- APB address, direction, data and strobes remain stable during a wait state.
-- AXI B-channel response remains stable under backpressure.
-- AXI R-channel data and response remain stable under backpressure.
+Verification components
 
-Cover properties record successful wait-state completion, write response and error response scenarios.
+Directed self-checking smoke test
 
-## Intentional bug cases
+UVM testbench structure with driver, monitor, scoreboard and coverage model
 
-The bridge contains disabled-by-default bug-injection parameters. They provide reproducible failures without leaving the normal design broken.
+SystemVerilog protocol assertions
 
-| Bug | Injected behavior | Expected detection | RCA |
-|---|---|---|---|
-| BUG-001 | Read address translated to the next word | Scoreboard read-data mismatch and AXI/APB address comparison | [Address translation RCA](docs/rca/BUG-001-address-translation.md) |
-| BUG-002 | APB `PSLVERR` converted to AXI `OKAY` | Response scoreboard mismatch | [Error response RCA](docs/rca/BUG-002-error-response.md) |
+APB memory slave with wait-state and error support
 
-This demonstrates the complete failure lifecycle: reproduce, observe, isolate, explain, correct and prove.
+Regression script with repeatable seeds
 
-Reproduce each intentional failure with an exact test and seed:
+Intentional bug cases and root-cause-analysis notes
 
-```bash
-make uvm TEST=bridge_smoke_test SEED=1 BUG=addr
-make uvm TEST=bridge_error_test SEED=7 BUG=resp
-```
+Assertions
 
-Both commands are expected to fail their scoreboard checks. Run again with `BUG=none` to prove the corrected design passes.
+The assertion module checks rules such as:
 
-## Repository structure
+PENABLE must not be active without PSEL
 
-```text
-rtl/
-  axi4lite_to_apb_bridge.sv     DUT
-  apb_memory_slave.sv           APB test slave with wait state and errors
-tb/
-  assertions/                   Protocol properties
-  smoke/                        Small directed self-checking testbench
-  uvm/                          Interfaces, sequences, agent, monitors,
-                                scoreboard, coverage, environment and test
-scripts/
-  run_regression.py             Multi-seed regression and CSV summary
-  run_vcs.sh                    VCS-compatible compile/run target
-  open_verdi.sh                 FSDB debug launcher
-docs/
-  verification_plan.md          Requirements, tests, checkers and exit criteria
-  debug_playbook.md             Repeatable failure-to-RCA method
-  rca/                          Bug investigation root-cause reports
-proof/                          Generated waveform evidence (not committed by default)
-```
+An APB access phase must have a setup phase first
 
-## Running with Questa
+APB address and control signals must remain stable during wait states
 
-Open a Linux/WSL terminal in the project directory:
+AXI read and write responses must remain stable during backpressure
 
-```bash
-make smoke
-make uvm TEST=bridge_smoke_test SEED=1
-BACKEND=questa make regression
-```
+The assertion and UVM files are included in the project. The passing result shown above is from the Icarus Verilog functional smoke test; I do not report assertion or coverage percentages that were not measured by a supported simulator.
 
-Open the generated VCD:
+Project folders
 
-```bash
-gtkwave proof/axi_apb_wave.vcd
-```
+rtl/              Bridge RTL and APB memory slave
+tb/smoke/         Directed self-checking testbench
+tb/uvm/           UVM environment
+tb/assertions/    Protocol assertions
+scripts/          Regression and simulator scripts
+docs/             Verification plan, waveform and RCA notes
 
-## Running with VCS and Verdi
+Debug method
 
-Use these commands only in a licensed environment:
+When a test fails, I first check the test name, seed and simulation time. Then I open the waveform, compare the AXI and APB handshakes, find the first incorrect signal and trace it back to the RTL or testbench source. After correcting the issue, I rerun the same test and then the regression.
 
-```bash
-make vcs TEST=bridge_smoke_test SEED=1
-make verdi
-BACKEND=vcs make regression
-```
+Current status
 
-The flow uses:
+Functional smoke test: PASS
 
-- `-sverilog` for SystemVerilog
-- `-ntb_opts uvm-1.2` for UVM
-- `-debug_access+all -kdb` for source/hierarchy debug
-- `+ntb_random_seed` for reproducible constrained-random tests
-- FSDB dumping when `VERDI_HOME` is configured
+Checks: 5
 
-## Regression result format
+Errors: 0
 
-```text
-PASS bridge_smoke_test        seed=    1    2.31s
-PASS bridge_base_test         seed=   29    2.20s
-PASS bridge_base_test         seed=   47    2.25s
-REGRESSION PASS total=5 failed=0
-```
+Waveform: generated and reviewed in GTKWave
 
-The script also writes `logs/regression_summary.csv` and a complete runner log for every test/seed.
+UVM, assertions and coverage: included for use with a simulator that supports them
 
-## Honest project status
+Simple interview explanation
 
-- RTL, UVM architecture, assertions, automation and documentation are provided.
-- CI performs synthesizable RTL lint and Python syntax checking.
-- Simulator-specific UVM, assertion and coverage results must be generated in the user’s licensed local environment.
-- Coverage percentages are reported only after a supported coverage run; no percentage is invented.
-
-## Interview explanation
-
-> I created a specification-driven UVM environment for an AXI4-Lite-to-APB bridge. The environment uses constrained-random AXI traffic, passive protocol monitoring, an end-to-end reference scoreboard, protocol assertions and functional coverage. I automated multi-seed regressions and documented reproducible injected bugs from first failure through waveform analysis, signal tracing, root-cause correction and regression proof. The source and automation are tool-portable, with separate targets for my available simulator and for VCS/Verdi environments.
+I designed and verified an AXI4-Lite to APB bridge. I tested write, read and error transactions with a self-checking testbench. I used the waveform to verify the AXI handshakes, APB setup/access phases and returned data. I also organized UVM components, assertions, regression scripts and bug-analysis notes in the repository.
