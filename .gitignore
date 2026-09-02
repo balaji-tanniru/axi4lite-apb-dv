@@ -1,0 +1,13 @@
+sim_build/
+logs/*.log
+logs/*.csv
+proof/*.vcd
+proof/*.fsdb
+csrc/
+simv*
+ucli.key
+novas.*
+verdiLog/
+transcript
+work/
+

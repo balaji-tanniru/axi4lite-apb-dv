@@ -1,0 +1,13 @@
+name: RTL and automation checks
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTL linter
+        run: sudo apt-get update && sudo apt-get install -y verilator
+      - name: Lint synthesizable RTL
+        run: verilator --lint-only -Wall -Wno-fatal rtl/axi4lite_to_apb_bridge.sv rtl/apb_memory_slave.sv
+      - name: Check Python automation
+        run: python3 -m py_compile scripts/run_regression.py
