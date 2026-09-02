@@ -1,98 +1,61 @@
-AXI4-Lite to APB Bridge Verification
+# AXI4-Lite to APB Bridge Verification
 
-I built this project to practice RTL design and design verification using an AXI4-Lite to APB bridge.
+I built this project to improve my RTL design and verification skills. The design receives AXI4-Lite read and write requests and converts them into APB transfers for a simple memory slave.
 
-The bridge receives read and write requests from the AXI4-Lite side and converts them into APB transfers. I used an APB memory model to check that the correct address, data and response are returned.
+## Test result
 
-Test result
-
-The directed smoke test completed successfully:
-
+```text
 AXI_APB_TEST_PASS checks=5 errors=0
+```
 
-The test performed:
+The smoke test completed two writes, two reads and one invalid-address transaction. The testbench checked the returned data and the error response automatically.
 
-Two write transactions
+## Waveform
 
-Two read transactions
+This waveform was generated from the passing test and reviewed in GTKWave.
 
-One invalid-address transaction to check the error response
+![AXI4-Lite to APB waveform](docs/axi_apb_waveform.png)
 
-Waveform
+I used it to compare the AXI handshakes with the APB setup and access phases. It shows how each AXI request becomes an APB transfer and how the response returns to AXI.
 
-The waveform below was generated during the passing test and opened using GTKWave.
+## What is included
 
+- AXI4-Lite to APB bridge RTL
+- APB memory slave with wait-state and error support
+- Self-checking functional smoke test
+- UVM driver, monitor, scoreboard and coverage structure
+- SystemVerilog protocol assertions
+- Regression automation with repeatable seeds
+- Intentional bug cases and root-cause-analysis notes
 
+## Tools used
 
-In the waveform, I can check the AXI request and response signals together with the APB setup and access phases. This helps confirm that every AXI transaction becomes the correct APB transaction.
+- SystemVerilog
+- Icarus Verilog
+- GTKWave
+- Python and Make
+- VS Code
+- Git and GitHub
 
-Tools used
+## Project folders
 
-SystemVerilog for RTL and testbench code
-
-Icarus Verilog for the completed functional smoke test
-
-GTKWave for waveform debugging
-
-Python and Makefile scripts for automation and regressions
-
-Git and GitHub for version control
-
-VS Code for development
-
-Verification components
-
-Directed self-checking smoke test
-
-UVM testbench structure with driver, monitor, scoreboard and coverage model
-
-SystemVerilog protocol assertions
-
-APB memory slave with wait-state and error support
-
-Regression script with repeatable seeds
-
-Intentional bug cases and root-cause-analysis notes
-
-Assertions
-
-The assertion module checks rules such as:
-
-PENABLE must not be active without PSEL
-
-An APB access phase must have a setup phase first
-
-APB address and control signals must remain stable during wait states
-
-AXI read and write responses must remain stable during backpressure
-
-The assertion and UVM files are included in the project. The passing result shown above is from the Icarus Verilog functional smoke test; I do not report assertion or coverage percentages that were not measured by a supported simulator.
-
-Project folders
-
-rtl/              Bridge RTL and APB memory slave
-tb/smoke/         Directed self-checking testbench
+```text
+rtl/              RTL design
+tb/smoke/         Functional smoke test
 tb/uvm/           UVM environment
 tb/assertions/    Protocol assertions
-scripts/          Regression and simulator scripts
-docs/             Verification plan, waveform and RCA notes
+scripts/          Simulation and regression scripts
+docs/             Waveform, verification plan and RCA notes
+```
 
-Debug method
+## Assertions and coverage
 
-When a test fails, I first check the test name, seed and simulation time. Then I open the waveform, compare the AXI and APB handshakes, find the first incorrect signal and trace it back to the RTL or testbench source. After correcting the issue, I rerun the same test and then the regression.
+The assertion module checks APB setup/access behavior, signal stability during wait states and AXI response stability during backpressure. UVM, assertions and coverage code are included, but I only report results that were actually measured. The confirmed result in this repository is the Icarus Verilog smoke test: **5 checks and 0 errors**.
 
-Current status
+## How I debug
 
-Functional smoke test: PASS
+When a test fails, I check the test name, seed and failure time. I open the waveform, compare AXI and APB signals, locate the first incorrect value and trace it back to the RTL or testbench. After the fix, I rerun the same test and then the regression.
 
-Checks: 5
+## Interview explanation
 
-Errors: 0
-
-Waveform: generated and reviewed in GTKWave
-
-UVM, assertions and coverage: included for use with a simulator that supports them
-
-Simple interview explanation
-
-I designed and verified an AXI4-Lite to APB bridge. I tested write, read and error transactions with a self-checking testbench. I used the waveform to verify the AXI handshakes, APB setup/access phases and returned data. I also organized UVM components, assertions, regression scripts and bug-analysis notes in the repository.
+I designed and verified an AXI4-Lite to APB bridge. I tested write, read and invalid-address transactions using a self-checking testbench. I reviewed the waveform to verify the AXI handshakes, APB phases, data and responses. I also added UVM components, assertions, regression scripts and documented bug analysis.
