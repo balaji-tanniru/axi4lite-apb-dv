@@ -1,3 +1,13 @@
+# AXI4-Lite to APB DV
+
+## Verification status
+
+The Makefile and CI now define an Icarus smoke run plus Verilator lint. Neither Icarus nor Verilator was installed in this repair environment, so those updated hardware checks were not executed here. UVM/VCS/Questa flows were not run.
+
+## Repository
+
+This repository contains the RTL/testbench/automation sources for the project. Review fixes are summarized in the package-level `CHANGES.md`.
+
 # AXI4-Lite to APB Bridge Verification
 
 I built this project to improve my RTL design and verification skills. The design receives AXI4-Lite read and write requests and converts them into APB transfers for a simple memory slave.

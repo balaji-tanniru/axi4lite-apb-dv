@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Small, reproducible regression launcher and result summarizer."""
 from __future__ import annotations
-import argparse, csv, pathlib, subprocess, time
+import argparse, csv, pathlib, subprocess, time, random
 
 TESTS = [
     ("bridge_smoke_test", 1),
@@ -15,10 +15,13 @@ TESTS = [
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", choices=("questa", "vcs"), default="questa")
+    parser.add_argument("--random-seeds", type=int, default=0, metavar="N")
     args = parser.parse_args()
     pathlib.Path("logs").mkdir(exist_ok=True)
     rows=[]
-    for test,seed in TESTS:
+    tests=list(TESTS)
+    for _ in range(args.random_seeds): tests.append(("bridge_base_test", random.SystemRandom().randint(1, 2_147_483_646)))
+    for test,seed in tests:
         start=time.monotonic()
         target="uvm" if args.backend=="questa" else "vcs"
         cmd=["make",target,f"TEST={test}",f"SEED={seed}"]

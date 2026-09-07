@@ -16,6 +16,11 @@ module axi_apb_assertions #(
   default clocking cb @(posedge aclk); endclocking
   default disable iff (!aresetn);
 
+
+  reset_clears_responses:
+    assert property (@(posedge aclk) !aresetn |=> !s_axi_bvalid && !s_axi_rvalid && !psel && !penable)
+      else $error("Reset did not return channels to idle");
+
   apb_enable_requires_select:
     assert property (penable |-> psel)
       else $error("APB protocol: PENABLE without PSEL");

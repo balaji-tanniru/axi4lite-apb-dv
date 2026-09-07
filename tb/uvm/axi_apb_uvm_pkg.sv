@@ -182,7 +182,7 @@ package axi_apb_uvm_pkg;
     `uvm_component_utils(bridge_scoreboard)
     uvm_analysis_imp_axi #(axi_item,bridge_scoreboard) axi_imp;
     uvm_analysis_imp_apb #(apb_item,bridge_scoreboard) apb_imp;
-    axi_item expected_q[$]; bit [31:0] model_mem[bit[7:0]]; int checks,errors;
+    axi_item expected_q[$]; apb_item apb_q[$]; axi_item axi_q[$]; bit [31:0] model_mem[bit[7:0]]; int checks,errors;
     function new(string name,uvm_component parent); super.new(name,parent); axi_imp=new("axi_imp",this); apb_imp=new("apb_imp",this); endfunction
     function void write_apb(apb_item t); axi_item exp=axi_item::type_id::create("expected");
       exp.op=t.write?AXI_WRITE:AXI_READ; exp.addr=t.addr; exp.resp=t.error?2'b10:2'b00;
@@ -195,7 +195,7 @@ package axi_apb_uvm_pkg;
     function void write_axi(axi_item got); axi_item exp; checks++;
       if(expected_q.size()==0) begin errors++; `uvm_error("SCB","AXI response without completed APB transfer") return; end
       exp=expected_q.pop_front();
-      if(got.op!=exp.op || got.resp!=exp.resp || (got.op==AXI_READ&&got.resp==0&&got.read_data!=exp.read_data)) begin
+      if(got.op!=exp.op || got.addr!=exp.addr || got.resp!=exp.resp || (got.op==AXI_READ&&got.resp==0&&got.read_data!=exp.read_data)) begin
         errors++; `uvm_error("SCB",$sformatf("Mismatch exp=%s got=%s",exp.sprint(),got.sprint()))
       end else `uvm_info("SCB",$sformatf("CHECK_PASS %0d",checks),UVM_MEDIUM)
     endfunction
@@ -239,11 +239,11 @@ package axi_apb_uvm_pkg;
 
   class bridge_base_test extends uvm_test;
     `uvm_component_utils(bridge_base_test)
-    bridge_env env;
+    bridge_env env; virtual axi_lite_if vif;
     function new(string name,uvm_component parent); super.new(name,parent); endfunction
-    function void build_phase(uvm_phase phase); env=bridge_env::type_id::create("env",this); endfunction
+    function void build_phase(uvm_phase phase); super.build_phase(phase); env=bridge_env::type_id::create("env",this); if(!uvm_config_db#(virtual axi_lite_if)::get(this,"","axi_vif",vif)) `uvm_fatal("NOVIF","test axi_vif missing") endfunction
     task run_phase(uvm_phase phase); axi_mixed_sequence seq=axi_mixed_sequence::type_id::create("seq");
-      phase.raise_objection(this); wait(env.axi.drv.vif.ARESETn); seq.start(env.axi.seqr); #100ns; phase.drop_objection(this);
+      phase.raise_objection(this); wait(vif.ARESETn); seq.start(env.axi.seqr); #100ns; phase.drop_objection(this);
     endtask
   endclass
 
@@ -251,7 +251,7 @@ package axi_apb_uvm_pkg;
     `uvm_component_utils(bridge_smoke_test)
     function new(string name,uvm_component parent); super.new(name,parent); endfunction
     task run_phase(uvm_phase phase); axi_smoke_sequence seq=axi_smoke_sequence::type_id::create("seq");
-      phase.raise_objection(this); wait(env.axi.drv.vif.ARESETn); seq.start(env.axi.seqr); #100ns; phase.drop_objection(this);
+      phase.raise_objection(this); wait(vif.ARESETn); seq.start(env.axi.seqr); #100ns; phase.drop_objection(this);
     endtask
   endclass
 
@@ -259,7 +259,7 @@ package axi_apb_uvm_pkg;
     `uvm_component_utils(bridge_error_test)
     function new(string name,uvm_component parent); super.new(name,parent); endfunction
     task run_phase(uvm_phase phase); axi_error_sequence seq=axi_error_sequence::type_id::create("seq");
-      phase.raise_objection(this); wait(env.axi.drv.vif.ARESETn); seq.start(env.axi.seqr); #100ns; phase.drop_objection(this);
+      phase.raise_objection(this); wait(vif.ARESETn); seq.start(env.axi.seqr); #100ns; phase.drop_objection(this);
     endtask
   endclass
 endpackage

@@ -47,8 +47,9 @@ module tb_top;
 `endif
   end
   initial begin
-    uvm_config_db#(virtual axi_lite_if)::set(null,"uvm_test_top.env.axi.*","axi_vif",axi);
+    uvm_config_db#(virtual axi_lite_if)::set(null,"uvm_test_top*","axi_vif",axi);
     uvm_config_db#(virtual apb_if)::set(null,"uvm_test_top.env.apb","apb_vif",apb);
     run_test("bridge_base_test");
   end
+  initial begin #2ms; `uvm_fatal("TIMEOUT","AXI/APB UVM timeout") end
 endmodule

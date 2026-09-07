@@ -17,10 +17,9 @@ help:
 	@echo "make regression BACKEND=questa"
 
 smoke:
-	mkdir -p logs proof
-	vlib $(BUILD) 2>/dev/null || true
-	vlog -sv -work $(BUILD) $(RTL) $(SVA) tb/smoke/axi_apb_smoke_tb.sv
-	vsim -c -lib $(BUILD) axi_apb_smoke_tb -do "run -all; quit -f" | tee logs/smoke.log
+	mkdir -p logs proof sim_build
+	iverilog -g2012 -o sim_build/axi_apb_smoke $(RTL) tb/smoke/axi_apb_smoke_tb.sv
+	vvp sim_build/axi_apb_smoke | tee logs/smoke.log
 	grep -q "AXI_APB_TEST_PASS" logs/smoke.log
 
 uvm:
